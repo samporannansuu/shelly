@@ -150,7 +150,6 @@ function checkPricesAndSetLED(forced) {
 }
 
 function setPlugLedColor(rgbArray) {
-  console.log("SettingLed");
   Shelly.call("PLUGS_UI.SetConfig", {
     config: {
       leds: { mode: "switch", colors: { "switch:0": {
