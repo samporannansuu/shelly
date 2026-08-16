@@ -34,7 +34,7 @@ function checkPricesAndSetLED(forced) {
        return;
   }
 
-   console.log("Read prices and update led status");
+   if (CONFIG.debugLogs) console.log("Read prices and update led status");
   
   Shelly.call("HTTP.GET", { url: CONFIG.url }, function (response, error_code, error_msg) {
     if (error_code !== 0 || !response || response.code !== 200) {
@@ -109,7 +109,7 @@ function checkPricesAndSetLED(forced) {
     let isCheapWindow = isCurrentHourCheap && isNextHourCheap;
     let targetColor = isCheapWindow ? "GREEN" : "RED";
 
-    let statusText = isCheapWindow ? "CHEAP (Both hours below average)" : "EXPENSIVE (One or both hours above average)";
+    let statusText = isCheapWindow ? "Led : Green" : "Led: Red";
 
     // --- 1. SYSTEM CONSOLE LOGGING ---
     if (CONFIG.debugLogs) {
@@ -122,27 +122,29 @@ function checkPricesAndSetLED(forced) {
 
     // --- 2. GEN3 VIRTUAL COMPONENTS DASHBOARD OVERLAY ---
     if (CONFIG.useVirtualComponents) {
-      Shelly.call("Number.Set", { id: "number:daily_avg", value: dailyAverage });
+      Shelly.call("Text.Set", { id: "201", value: "Day:" + Number(dailyAverage.toFixed(3))});
       // We pass the current hour price to the virtual component component
-      Shelly.call("Number.Set", { id: "number:two_hour_avg", value: currentHourPrice }); 
-      Shelly.call("Text.Set", { id: "text:led_status", value: statusText });
+      Shelly.call("Text.Set", { id: "202", value: "Now:" + Number(currentHourPrice .toFixed(3))});
+      Shelly.call("Text.Set", { id: "203", value: "Next:" + Number(nextHourPrice.toFixed(3))});
+      Shelly.call("Text.Set", { id: "200", value: statusText });
     }
 
     if (targetColor === currentLedColor) {
        if (CONFIG.debugLogs) console.log("Color is already " + targetColor + ". Skipping physical API call to protect flash storage.");
     }   
-    else {
-       if (CONFIG.debugLogs) console.log("State change detected! Changing LED to " + targetColor);
-      
-       if (targetColor === "GREEN") {
+    else {      
+      Timer.set(200, false,function() {
+        if (CONFIG.debugLogs) console.log("State change detected! Changing LED to " + targetColor);
+    
+        if (targetColor === "GREEN") {
          setPlugLedColor(CONFIG.cheapPriceColor); // Pure Green
-       } else {
-        setPlugLedColor(CONFIG.expensivePriceColor); // Pure Red
-       }      
+        } else {
+         setPlugLedColor(CONFIG.expensivePriceColor); // Pure Red
+        }      
       // Update the RAM state tracker
-      currentLedColor = targetColor;
+        currentLedColor = targetColor;
+      },null);
     }
-
     lastUpdatedHour = currentHour;
   });
 }
