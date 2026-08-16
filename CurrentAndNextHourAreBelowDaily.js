@@ -25,14 +25,12 @@ function checkPricesAndSetLED(forced) {
   
   // Enforce precise top-of-the-hour changes
   if (now.getMinutes() !== 0 && !forced)
-  {
-       console.log("Return not being first minute or forced");
+  {     
        return;
   }
   
   if (currentHour === lastUpdatedHour && !forced) 
-  {
-       console.log("Return not being new hour or forced");
+  {     
        return;
   }
 
